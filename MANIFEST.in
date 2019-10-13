@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include jenny *.css
+recursive-include jenny *.csv
+recursive-include jenny *.html
+recursive-include jenny *.ico
+recursive-include jenny *.js
+recursive-include jenny *.json
+recursive-include jenny *.md
+recursive-include jenny *.png
+recursive-include jenny *.py
+recursive-include jenny *.svg
+recursive-include jenny *.txt
+recursive-exclude jenny *.pyc

@@ -1,0 +1,72 @@
+{
+ "autoname": "JCS.######",
+ "creation": "2019-10-12 16:54:28.340545",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "customer",
+  "month",
+  "customer_code",
+  "customer_email",
+  "gl",
+  "outstanding"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "customer_code",
+   "fieldtype": "Data",
+   "label": "Customer Code"
+  },
+  {
+   "fieldname": "gl",
+   "fieldtype": "Code",
+   "label": "GL"
+  },
+  {
+   "fieldname": "outstanding",
+   "fieldtype": "Code",
+   "label": "Outstanding"
+  },
+  {
+   "fieldname": "customer_email",
+   "fieldtype": "Data",
+   "label": "Customer Email"
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Month"
+  }
+ ],
+ "modified": "2019-10-12 18:47:16.469832",
+ "modified_by": "Administrator",
+ "module": "Jenny",
+ "name": "Customer Statement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "track_changes": 1
+}

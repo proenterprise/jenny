@@ -1,0 +1,70 @@
+{
+ "creation": "2019-10-12 13:39:06.217590",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "enable_auto_email",
+  "company",
+  "receivable_account",
+  "subject",
+  "send_email_on_date_every_month",
+  "send_emails_now"
+ ],
+ "fields": [
+  {
+   "fieldname": "enable_auto_email",
+   "fieldtype": "Check",
+   "label": "Enable Auto Email"
+  },
+  {
+   "fieldname": "send_email_on_date_every_month",
+   "fieldtype": "Select",
+   "label": "Send email on date every month",
+   "options": "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28"
+  },
+  {
+   "fieldname": "send_emails_now",
+   "fieldtype": "Button",
+   "label": "Send Emails Now"
+  },
+  {
+   "fieldname": "receivable_account",
+   "fieldtype": "Link",
+   "label": "Receivable Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "HTML Editor",
+   "label": "Subject"
+  }
+ ],
+ "issingle": 1,
+ "modified": "2019-10-14 00:32:51.489721",
+ "modified_by": "Administrator",
+ "module": "Jenny",
+ "name": "Customer Statement Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "track_changes": 1
+}
