@@ -1,5 +1,5 @@
 {
- "autoname": "JCS.######",
+ "autoname": "CUST-STAT-.######",
  "creation": "2019-10-12 16:54:28.340545",
  "doctype": "DocType",
  "document_type": "Document",
@@ -47,7 +47,7 @@
    "label": "Month"
   }
  ],
- "modified": "2019-10-12 18:47:16.469832",
+ "modified": "2019-10-14 08:43:33.058478",
  "modified_by": "Administrator",
  "module": "Jenny",
  "name": "Customer Statement",
@@ -62,6 +62,18 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
    "share": 1,
    "write": 1
   }

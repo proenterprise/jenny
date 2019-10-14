@@ -1,6 +1,7 @@
 {
  "creation": "2019-10-12 13:39:06.217590",
  "doctype": "DocType",
+ "document_type": "Setup",
  "engine": "InnoDB",
  "field_order": [
   "enable_auto_email",
@@ -46,7 +47,7 @@
   }
  ],
  "issingle": 1,
- "modified": "2019-10-14 00:32:51.489721",
+ "modified": "2019-10-14 08:36:34.328159",
  "modified_by": "Administrator",
  "module": "Jenny",
  "name": "Customer Statement Settings",
@@ -59,6 +60,16 @@
    "print": 1,
    "read": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Accounts Manager",
    "share": 1,
    "write": 1
   }
