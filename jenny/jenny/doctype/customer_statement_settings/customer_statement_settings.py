@@ -16,7 +16,7 @@ INDEX_ACCT_REV_CUST = 0
 START_FIG = 5
 
 class CustomerStatementSettings(Document):
-	def send_customer_statement(self, customer=None):
+	def send_customer_statement(self, customers=[]):
 		if not self.company or not self.receivable_account:
 			frappe.throw("Company and Receivable accounts are mandatory to send emails.")
 
@@ -45,10 +45,13 @@ class CustomerStatementSettings(Document):
 		})
 		
 		gl_list = filter(self.remove_unwanted_rows, gl(gl_args)[1])
-		account_rev_list = account_recv(account_rev_args)
-
+		account_rev_list = account_recv(account_rev_args)[1]
+		self.customers = customers 
+		if len(self.customers) > 0:
+			account_rev_list = filter(self.remove_unwanted_customers, account_rev_list)
+		
 		self.statements = []
-		for f in account_rev_list[1]:
+		for f in account_rev_list:
 			gl_dict = []
 			if f[START_FIG] > 0:
 				for e in gl_list:
@@ -61,13 +64,13 @@ class CustomerStatementSettings(Document):
 							"90": f[START_FIG+3],
 							"90 Above": f[START_FIG+4]
 						})
-				customer = frappe.get_doc("Customer", e.party)
-				contact_link = get_default_contact("Customer", e.party)
+				customer = frappe.get_doc("Customer", f[INDEX_ACCT_REV_CUST])
+				contact_link = get_default_contact("Customer", f[INDEX_ACCT_REV_CUST])
 				contact = frappe.db.get_value("Contact", contact_link, "email_id")
 				
-				if contact and hasattr(customer, 'auto_email_statement') and customer.auto_email_statement:
+				if contact and (not hasattr(customer, 'do_not_email_monthly_statement') or (hasattr(customer, 'do_not_email_monthly_statement') and not customer.do_not_email_monthly_statement)):
 					csdoc = frappe.new_doc("Customer Statement")
-					csdoc.customer = e.party
+					csdoc.customer = f[INDEX_ACCT_REV_CUST]
 					csdoc.customer_code = customer.customer_code if hasattr(customer, 'customer_code') else ""
 					csdoc.customer_email = contact
 					csdoc.month = month
@@ -84,6 +87,9 @@ class CustomerStatementSettings(Document):
 
 	def remove_unwanted_rows(self, data):
 		return True if data.account == self.receivable_account else False
+	
+	def remove_unwanted_customers(self, data):
+		return True if data[INDEX_ACCT_REV_CUST] in self.customers else False
 
 	def json_serial(self, obj):    
 		if isinstance(obj, (datetime, date)):
@@ -111,3 +117,8 @@ def send_customer_statements():
 		d.send_customer_statement()
 	else:
 		frappe.msgprint("Not today")
+
+@frappe.whitelist()
+def send_customer_statement_api(customers=[]):
+	d = frappe.get_doc("Customer Statement Settings", "Customer Statement Settings")
+	d.send_customer_statement(customers)

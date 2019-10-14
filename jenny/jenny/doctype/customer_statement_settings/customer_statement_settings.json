@@ -9,7 +9,8 @@
   "receivable_account",
   "subject",
   "send_email_on_date_every_month",
-  "send_emails_now"
+  "send_emails_now",
+  "customer_list"
  ],
  "fields": [
   {
@@ -44,10 +45,17 @@
    "fieldname": "subject",
    "fieldtype": "HTML Editor",
    "label": "Subject"
+  },
+  {
+   "description": "If you have unprocessed records in the following table only those Customers will receive email statement.\n\nIf all are processed system will send email to all eligible customers.",
+   "fieldname": "customer_list",
+   "fieldtype": "Table",
+   "label": "Customer List",
+   "options": "Customer Statement Customer List"
   }
  ],
  "issingle": 1,
- "modified": "2019-10-14 08:36:34.328159",
+ "modified": "2019-10-14 11:49:13.590673",
  "modified_by": "Administrator",
  "module": "Jenny",
  "name": "Customer Statement Settings",
