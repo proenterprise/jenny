@@ -12,9 +12,6 @@ from frappe.core.doctype.communication.email import make
 from erpnext.accounts.report.accounts_receivable_summary.accounts_receivable_summary import execute as account_recv
 from erpnext.accounts.report.general_ledger.general_ledger import execute as gl
 
-INDEX_ACCT_REV_CUST = 0
-START_FIG = 5
-
 class CustomerStatementSettings(Document):
 	def send_customer_statement(self, customers=[]):
 		if not self.company or not self.receivable_account:
@@ -32,6 +29,7 @@ class CustomerStatementSettings(Document):
 			"range1":30,
 			"range2":60,
 			"range3":90,
+			"range4":120,
 			"report_date": last_day
 		})
 
@@ -43,7 +41,7 @@ class CustomerStatementSettings(Document):
 			"account":self.receivable_account,
 			"group_by":"Group by Voucher (Consolidated)"
 		})
-		
+
 		gl_list = filter(self.remove_unwanted_rows, gl(gl_args)[1])
 		account_rev_list = account_recv(account_rev_args)[1]
 		self.customers = customers 
@@ -53,24 +51,24 @@ class CustomerStatementSettings(Document):
 		self.statements = []
 		for f in account_rev_list:
 			gl_dict = []
-			if f[START_FIG] > 0:
+			if f.outstanding > 0:
 				for e in gl_list:
-					if f[INDEX_ACCT_REV_CUST] == e.party:
+					if f.party == e.party:
 						gl_dict.append(e)
 						out_dict = frappe._dict({
-							"total": f[START_FIG],
-							"30": f[START_FIG+1],
-							"60": f[START_FIG+2],
-							"90": f[START_FIG+3],
-							"90 Above": f[START_FIG+4]
+							"total": f.outstanding,
+							"30": f.range1,
+							"60": f.range2,
+							"90": f.range3,
+							"90 Above": f.range4+f.range5
 						})
-				customer = frappe.get_doc("Customer", f[INDEX_ACCT_REV_CUST])
-				contact_link = get_default_contact("Customer", f[INDEX_ACCT_REV_CUST])
+				customer = frappe.get_doc("Customer", f.party)
+				contact_link = get_default_contact("Customer", f.party)
 				contact = frappe.db.get_value("Contact", contact_link, "email_id")
 				
 				if contact and (not hasattr(customer, 'do_not_email_monthly_statement') or (hasattr(customer, 'do_not_email_monthly_statement') and not customer.do_not_email_monthly_statement)):
 					csdoc = frappe.new_doc("Customer Statement")
-					csdoc.customer = f[INDEX_ACCT_REV_CUST]
+					csdoc.customer = f.party
 					csdoc.customer_code = customer.customer_code if hasattr(customer, 'customer_code') else ""
 					csdoc.customer_email = contact
 					csdoc.month = month
@@ -89,7 +87,7 @@ class CustomerStatementSettings(Document):
 		return True if data.account == self.receivable_account else False
 	
 	def remove_unwanted_customers(self, data):
-		return True if data[INDEX_ACCT_REV_CUST] in self.customers else False
+		return True if data.party in self.customers else False
 
 	def json_serial(self, obj):    
 		if isinstance(obj, (datetime, date)):
