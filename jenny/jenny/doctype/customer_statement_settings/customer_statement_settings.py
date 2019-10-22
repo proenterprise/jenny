@@ -103,11 +103,11 @@ class CustomerStatementSettings(Document):
 
 		for customer_statement in self.statements:
 			make(
-				recipients = e.customer_email,
-				subject = self.company+" Billng for "+e.month,
+				recipients = customer_statement.customer_email,
+				subject = self.company+" Billng for "+customer_statement.month,
 				content = self.subject,
 				doctype = "Customer Statement",
-				name = e.name,
+				name = customer_statement.name,
 				send_email = True,
 				send_me_a_copy = False,
 				print_format = "Customer Statement",
