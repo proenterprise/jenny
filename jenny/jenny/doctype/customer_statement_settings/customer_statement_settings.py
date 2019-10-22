@@ -9,7 +9,7 @@ from frappe.model.document import Document
 from frappe.utils import nowdate, add_months, getdate, get_first_day, get_last_day
 from frappe.contacts.doctype.contact.contact import get_default_contact
 from frappe.core.doctype.communication.email import make
-from erpnext.accounts.report.accounts_receivable_summary.accounts_receivable_summary import execute as account_recv
+from erpnext.accounts.report.accounts_receivable_summary.accounts_receivable_summary import execute as accounts_rsumm
 from erpnext.accounts.report.general_ledger.general_ledger import execute as gl
 
 class CustomerStatementSettings(Document):
@@ -20,10 +20,10 @@ class CustomerStatementSettings(Document):
 		# month_day = add_months(nowdate(), -1)
 		month_day = nowdate()
 		first_day = get_first_day(month_day)
-		last_day = get_last_day(month_day)	
+		last_day = get_last_day(month_day)
 		month = first_day.strftime("%B")
 
-		account_rev_args = frappe._dict({
+		accounts_rec_args = frappe._dict({
 			"company": self.company,
 			"ageing_based_on":"Posting Date",
 			"range1":30,
@@ -42,62 +42,69 @@ class CustomerStatementSettings(Document):
 			"group_by":"Group by Voucher (Consolidated)"
 		})
 
-		gl_list = filter(self.remove_unwanted_rows, gl(gl_args)[1])
-		account_rev_list = account_recv(account_rev_args)[1]
-		self.customers = customers 
+		gl_rows = filter(self.is_receivable_type, gl(gl_args)[1])
+		rec_summaries = accounts_rsumm(accounts_rec_args)[1]
+		self.customers = customers
 		if len(self.customers) > 0:
-			account_rev_list = filter(self.remove_unwanted_customers, account_rev_list)
-		
+			rec_summaries = filter(self.is_customer_type, rec_summaries)
+
 		self.statements = []
-		for f in account_rev_list:
+		for customer_summary in rec_summaries:
 			gl_dict = []
-			if f.outstanding > 0:
-				for e in gl_list:
-					if f.party == e.party:
+			if customer_summary.outstanding > 0:
+				for e in gl_rows:
+					if customer_summary.party == e.party:
 						gl_dict.append(e)
 						out_dict = frappe._dict({
-							"total": f.outstanding,
-							"30": f.range1,
-							"60": f.range2,
-							"90": f.range3,
-							"90 Above": f.range4+f.range5
+							"total": customer_summary.outstanding,
+							"30": customer_summary.range1,
+							"60": customer_summary.range2,
+							"90": customer_summary.range3,
+							"90 Above": customer_summary.range4+customer_summary.range5
 						})
-				customer = frappe.get_doc("Customer", f.party)
-				contact_link = get_default_contact("Customer", f.party)
+				customer = frappe.get_doc("Customer", customer_summary.party)
+				contact_link = get_default_contact("Customer", customer_summary.party)
 				contact = frappe.db.get_value("Contact", contact_link, "email_id")
-				
-				if contact and (not hasattr(customer, 'do_not_email_monthly_statement') or (hasattr(customer, 'do_not_email_monthly_statement') and not customer.do_not_email_monthly_statement)):
-					csdoc = frappe.new_doc("Customer Statement")
-					csdoc.customer = f.party
-					csdoc.customer_code = customer.customer_code if hasattr(customer, 'customer_code') else ""
-					csdoc.customer_email = contact
-					csdoc.month = month
-					csdoc.gl = json.dumps(gl_dict, default=self.json_serial)
-					csdoc.outstanding = json.dumps(out_dict, default=self.json_serial)
-					res = csdoc.insert()
-					self.statements.append(res)
+
+				if contact and (not hasattr(customer, 'do_not_email_monthly_statement')
+					or (hasattr(customer, 'do_not_email_monthly_statement')
+					and not customer.do_not_email_monthly_statement)):
+					customer_statement_doc = frappe.new_doc("Customer Statement")
+					customer_statement_doc.customer = customer_summary.party
+					customer_statement_doc.customer_code = customer.customer_code if hasattr(customer, 'customer_code') else ""
+					customer_statement_doc.customer_email = contact
+					customer_statement_doc.month = month
+					customer_statement_doc.gl = json.dumps(gl_dict, default=self.json_serial)
+					customer_statement_doc.outstanding = json.dumps(out_dict, default=self.json_serial)
+					insert_statement_doc = customer_statement_doc.insert()
+					self.statements.append(insert_statement_doc)
 
 		frappe.db.commit()
 		if len(self.statements) > 0:
 			self.send_emails()
 
-		frappe.msgprint("Job is enqued and it will be completed soon.")
+		frappe.msgprint("Job queued for execution.")
 
-	def remove_unwanted_rows(self, data):
+	def is_receivable_type(self, data):
 		return True if data.account == self.receivable_account else False
-	
-	def remove_unwanted_customers(self, data):
+
+	def is_customer_type(self, data):
 		return True if data.party in self.customers else False
 
-	def json_serial(self, obj):    
+	def json_serial(self, obj):
 		if isinstance(obj, (datetime, date)):
 			return obj.isoformat()
 		raise TypeError ("Type %s not serializable" % type(obj))
 
+
+	# Create emails from array of statements
 	def send_emails(self):
-		for e in self.statements:
-			make(recipients = e.customer_email,
-				subject = "Customer Statement for the month of "+e.month,
+		customer_statement = []
+
+		for customer_statement in self.statements:
+			make(
+				recipients = e.customer_email,
+				subject = self.company+" Billng for "+e.month,
 				content = self.subject,
 				doctype = "Customer Statement",
 				name = e.name,
@@ -105,18 +112,19 @@ class CustomerStatementSettings(Document):
 				send_me_a_copy = False,
 				print_format = "Customer Statement",
 				read_receipt = False,
-				print_letterhead = True)
+				print_letterhead = True
+			)
 
 
 @frappe.whitelist()
 def send_customer_statements():
-	d = frappe.get_doc("Customer Statement Settings", "Customer Statement Settings")
-	if d.enable_auto_email and getdate().strftime("%-d") == d.send_email_on_date_every_month:
-		d.send_customer_statement()
+	settings = frappe.get_doc("Customer Statement Settings", "Customer Statement Settings")
+	if settings.enable_auto_email and getdate().strftime("%-d") == settings.send_email_on_date_every_month:
+		settings.send_customer_statement()
 	else:
-		frappe.msgprint("Not today")
+		frappe.msgprint("Not due")
 
 @frappe.whitelist()
 def send_customer_statement_api(customers=[]):
-	d = frappe.get_doc("Customer Statement Settings", "Customer Statement Settings")
-	d.send_customer_statement(customers)
+	settings = frappe.get_doc("Customer Statement Settings", "Customer Statement Settings")
+	settings.send_customer_statement(customers)
