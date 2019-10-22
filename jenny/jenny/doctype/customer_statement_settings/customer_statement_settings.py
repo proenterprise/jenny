@@ -52,9 +52,9 @@ class CustomerStatementSettings(Document):
 		for customer_summary in rec_summaries:
 			gl_dict = []
 			if customer_summary.outstanding > 0:
-				for e in gl_rows:
-					if customer_summary.party == e.party:
-						gl_dict.append(e)
+				for gl_row in gl_rows:
+					if customer_summary.party == gl_row.party:
+						gl_dict.append(gl_row)
 						out_dict = frappe._dict({
 							"total": customer_summary.outstanding,
 							"30": customer_summary.range1,
@@ -75,15 +75,17 @@ class CustomerStatementSettings(Document):
 					customer_statement_doc.customer_email = contact
 					customer_statement_doc.month = month
 					customer_statement_doc.gl = json.dumps(gl_dict, default=self.json_serial)
+					print(customer_statement_doc.gl) #log
 					customer_statement_doc.outstanding = json.dumps(out_dict, default=self.json_serial)
 					insert_statement_doc = customer_statement_doc.insert()
+
 					self.statements.append(insert_statement_doc)
 
 		frappe.db.commit()
 		if len(self.statements) > 0:
 			self.send_emails()
 
-		frappe.msgprint("Job queued for execution.")
+		frappe.msgprint("Statements queued for emailing.")
 
 	def is_receivable_type(self, data):
 		return True if data.account == self.receivable_account else False
@@ -106,14 +108,19 @@ class CustomerStatementSettings(Document):
 				recipients = customer_statement.customer_email,
 				subject = self.company+" Billng for "+customer_statement.month,
 				content = self.subject,
-				doctype = "Customer Statement",
-				name = customer_statement.name,
 				send_email = True,
 				send_me_a_copy = False,
-				print_format = "Customer Statement",
 				read_receipt = False,
+				name = customer_statement.name,
+				print_format = "Customer Statement",
+				doctype = "Customer Statement",
 				print_letterhead = True
 			)
+
+			# attach sales invoices
+			# invoices = frappe.get_all('Sales Invoice', filters={'status': 'Submitted', 'customer': customer_statement.customer}, print_format="Standard")
+			# print(invoices);
+
 
 
 @frappe.whitelist()
